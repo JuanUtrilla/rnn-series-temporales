@@ -1,38 +1,42 @@
-# Redes recurrentes para predicción de series temporales
+# GRU para predicción de temperatura
 
-Predicción de temperatura a varios días vista con **redes recurrentes (GRU)** en
-TensorFlow/Keras, sobre un dataset de series temporales meteorológicas.
+Serie diaria de temperatura, ventanas de 5 días de historia y predicción a 2 días vista.
+Módulo de *Predicción de series temporales con redes recurrentes* del Máster en Big Data,
+Data Science e IA de la Universidad Complutense (curso 2025-26).
 
-Desarrollado en el módulo de *Predicción de series temporales con redes recurrentes* del
-Máster en Big Data, Data Science e Inteligencia Artificial (Universidad Complutense de
-Madrid, curso 2025-26).
+El primer paso es el que convierte el problema en supervisado sin romper el orden
+cronológico: ventaneado con `create_windows_np`, `past, future = (5, 2)`. A partir de ahí,
+dos capas GRU (128 y 64) y una densa de salida.
 
-## Contenido
+Ese modelo base se queda en **7,04 de MSE** sobre el test, en °C².
 
-- **Ventaneado de la serie** — transformación de la serie continua en ventanas
-  deslizantes de tamaño 5 para predecir el valor a 2 días, que es el paso que convierte un
-  problema temporal en uno supervisado sin romper el orden cronológico.
-- **Modelo recurrente** — arquitectura de dos capas **GRU** sobre las ventanas generadas.
-- **Enriquecimiento con features** — incorporación de variables adicionales, entre ellas
-  `portion_year` (posición dentro del año), que da al modelo la estacionalidad de forma
-  explícita en lugar de obligarlo a inferirla; el modelo resultante mejora al anterior.
-- **Fundamentos** — razonamiento sobre arquitecturas *many-to-one* frente a otras
-  configuraciones secuencia-a-secuencia, y sobre el papel de los *word embeddings* como
-  alternativa densa al *one-hot encoding*.
+## Añadir contexto al modelo
+
+La segunda parte pide enriquecer la serie con más variables. El enunciado sugería una
+`portion_year`; acabaron entrando cinco señales: codificación cíclica seno/coseno del día
+del año y del mes, y la media móvil de los últimos 7 días. Las cíclicas le dan la
+estacionalidad masticada —diciembre y enero quedan cerca, cosa que un número del 1 al 365
+no consigue—, y la media móvil aporta la tendencia reciente. El modelo crece con
+*dropout* de 0,2 entre las GRU.
+
+Sobre el objetivo estandarizado, **MSE de 0,365** y **MAE de 1,93 °C** en grados reales.
+
+Un matiz honesto: los dos números de arriba no son comparables entre sí tal cual, porque
+el modelo base se evalúa en °C² y el mejorado sobre el objetivo tipificado. Para afirmar
+la mejora con rigor habría que devolver ambos a la misma escala y volver a medir. Está sin
+hacer.
+
+## Y algo de teoría
+
+El cuaderno cierra razonando dos cosas: por qué esta tarea es *many-to-one* y qué
+configuraciones secuencia-a-secuencia tendrían sentido en otros problemas, y el papel de
+los *word embeddings* como representación densa frente al *one-hot*.
 
 ## Ejecución
 
-Recomendado en **Google Colab** por el coste de entrenamiento; también funciona en local:
+Recomendado en Colab por el coste de entrenamiento; en local:
 
 ```bash
 pip install tensorflow pandas numpy matplotlib scikit-learn
 jupyter lab rnn_series_temporales.ipynb
 ```
-
-## Stack
-
-TensorFlow · Keras · NumPy · pandas · Matplotlib
-
----
-
-**Juan Peñas Utrilla** — [LinkedIn](https://www.linkedin.com/in/juan-penas-utrilla/) · [GitHub](https://github.com/JuanUtrilla)
